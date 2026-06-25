@@ -1,0 +1,57 @@
+================================================================
+API FLOW NOTES
+================================================================
+
+Architecture: Repository → Service → Controller → Route
+
+----------------------------------------------------------------
+REQUEST LIFECYCLE
+----------------------------------------------------------------
+
+  HTTP Request
+      ↓
+  Express Router         (src/routes/)
+      ↓
+  Validation Middleware  (src/validations/)   ← reject bad input early
+      ↓
+  Auth Middleware        (src/middleware/)     ← protect private routes
+      ↓
+  Controller             (src/controllers/)   ← parse req, call service
+      ↓
+  Service                (src/services/)      ← business logic
+      ↓
+  Repository             (src/repositories/)  ← Sequelize DB queries
+      ↓
+  PostgreSQL DB
+      ↓
+  Repository             ← returns raw data
+      ↓
+  Service                ← transforms / formats data
+      ↓
+  Controller             ← sends JSON response
+
+----------------------------------------------------------------
+RESPONSE FORMAT (standard)
+----------------------------------------------------------------
+
+  Success:
+  {
+    "success": true,
+    "message": "User created successfully",
+    "data": { ... }
+  }
+
+  Error:
+  {
+    "success": false,
+    "message": "Validation failed",
+    "errors": [ ... ]   ← optional
+  }
+
+----------------------------------------------------------------
+BASE URL
+----------------------------------------------------------------
+  Development : http://localhost:3000/api
+  Health Check: GET /api/health
+
+================================================================

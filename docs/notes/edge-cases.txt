@@ -1,0 +1,37 @@
+================================================================
+EDGE CASES & GOTCHAS
+================================================================
+
+----------------------------------------------------------------
+AUTH
+----------------------------------------------------------------
+  [!] Expired JWT         → return 401, prompt re-login
+  [!] Tampered JWT        → JsonWebTokenError → return 401
+  [!] Missing cookie      → return 401 "No token provided"
+  [!] User deleted after  → token still valid → check DB on each request
+      token issued
+  [!] Duplicate email     → catch Sequelize UniqueConstraintError → 409
+
+----------------------------------------------------------------
+DATABASE
+----------------------------------------------------------------
+  [!] DB down on startup  → connectDB() exits process (intentional)
+  [!] sequelize.sync()    → NEVER use in production, use migrations
+  [!] Password in response→ always use { attributes: { exclude: ['password'] } }
+  [!] Soft deletes        → if using paranoid: true, check deletedAt in queries
+
+----------------------------------------------------------------
+VALIDATION
+----------------------------------------------------------------
+  [!] Empty strings       → treat same as missing fields
+  [!] Extra fields in req → strip unknown fields before passing to service
+  [!] SQL injection       → Sequelize parameterized queries prevent this by default
+
+----------------------------------------------------------------
+GENERAL
+----------------------------------------------------------------
+  [!] Unhandled promise   → always wrap async handlers with asyncHandler()
+  [!] Stack trace leak    → errorHandler only exposes stack in development
+  [!] Cookie flags        → always set httpOnly: true, secure: true in production
+
+================================================================

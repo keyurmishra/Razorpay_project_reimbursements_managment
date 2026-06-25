@@ -1,0 +1,28 @@
+================================================================
+PHASE 02 — USER MODEL
+================================================================
+
+Goal:
+  Define the User Sequelize model with all necessary fields,
+  validations, and hooks.
+
+Tasks:
+  [x] Create src/models/user.model.js
+  [x] Define fields: id, name, email, passwordHash, role
+  [x] Add Sequelize validations (isEmail, notEmpty, len, isIn)
+  [x] Register model in src/models/index.js
+  [x] Create migration: src/migrations/20260625000001-create-users.js
+  [x] Create .sequelizerc to configure CLI paths
+  [x] Install sequelize-cli as devDependency
+
+Design Decisions:
+  - passwordHash field name (not "password") to signal it stores a hash
+  - underscored: true  →  passwordHash maps to password_hash column
+  - defaultScope excludes passwordHash from all queries automatically
+  - withPassword scope used only in auth service for login verification
+  - Roles: EMP (default) | RM | APE | CFO  stored as PostgreSQL ENUM
+  - Migration down() also drops the ENUM type (PostgreSQL-specific cleanup)
+  - Indexes: unique on email, plain index on role
+
+Status: Completed
+================================================================

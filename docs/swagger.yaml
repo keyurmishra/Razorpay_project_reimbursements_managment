@@ -1,0 +1,266 @@
+openapi: 3.0.0
+info:
+  title: Razorpay Reimbursement Management API
+  description: API for managing employee reimbursements, user roles, and reporting hierarchies.
+  version: 1.0.0
+servers:
+  - url: http://localhost:7002/api
+    description: Development Server
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: authToken
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        status:
+          type: string
+          example: fail
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: string
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [EMP, RM, APE, CFO]
+    Reimbursement:
+      type: object
+      properties:
+        id:
+          type: integer
+        employeeId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        amount:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, RM_APPROVED, APPROVED, REJECTED, PAID]
+        createdAt:
+          type: string
+          format: date-time
+
+security:
+  - cookieAuth: []
+
+paths:
+  /rest/onboardings/register:
+    post:
+      summary: Register a new user
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                role:
+                  type: string
+                  enum: [EMP, RM, APE, CFO]
+      responses:
+        '201':
+          description: Created
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+        '400':
+          description: Validation Error
+
+  /rest/onboardings/login:
+    post:
+      summary: Login user
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Logged in successfully
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+        '401':
+          description: Invalid credentials
+
+  /rest/onboardings/logout:
+    post:
+      summary: Logout user
+      tags: [Auth]
+      responses:
+        '200':
+          description: Logged out successfully
+
+  /rest/roles/assign:
+    post:
+      summary: Assign a role to a user (CFO only)
+      tags: [Roles]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, role]
+              properties:
+                userId:
+                  type: integer
+                role:
+                  type: string
+                  enum: [EMP, RM, APE, CFO]
+      responses:
+        '200':
+          description: Role assigned successfully
+        '403':
+          description: Forbidden
+
+  /rest/employees:
+    get:
+      summary: List employees visible to the authenticated user
+      tags: [Employees]
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Forbidden (EMP role)
+  
+  /rest/employees/assign:
+    post:
+      summary: Assign an employee to a reporting manager (CFO only)
+      tags: [Employees]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [employeeId, managerId]
+              properties:
+                employeeId:
+                  type: integer
+                managerId:
+                  type: integer
+      responses:
+        '201':
+          description: Assigned successfully
+        '409':
+          description: Conflict
+    delete:
+      summary: Remove an employee's manager assignment (CFO only)
+      tags: [Employees]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [employeeId]
+              properties:
+                employeeId:
+                  type: integer
+      responses:
+        '200':
+          description: Assignment removed successfully
+
+  /rest/reimbursements:
+    get:
+      summary: List reimbursements based on role visibility
+      tags: [Reimbursements]
+      responses:
+        '200':
+          description: Success
+    post:
+      summary: Create a reimbursement request (EMP only)
+      tags: [Reimbursements]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, amount]
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                amount:
+                  type: number
+      responses:
+        '201':
+          description: Created
+        '403':
+          description: Forbidden
+
+  /rest/reimbursements/{id}/decision:
+    post:
+      summary: Approve or reject a reimbursement (RM, APE, CFO)
+      tags: [Reimbursements]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision:
+                  type: string
+                  enum: [APPROVED, REJECTED]
+      responses:
+        '201':
+          description: Decision recorded
+        '403':
+          description: Forbidden
+        '409':
+          description: Conflict (Duplicate decision)
+        '422':
+          description: Unprocessable Entity (Terminal state or out of bounds)

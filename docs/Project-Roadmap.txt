@@ -1,0 +1,49 @@
+================================================================
+PROJECT ROADMAP — Razor Reimbursements Management
+================================================================
+
+Stack:  Node.js · Express.js · Sequelize · PostgreSQL · JWT
+
+----------------------------------------------------------------
+PHASES
+----------------------------------------------------------------
+
+  [x] Phase 01 — Project Setup
+        Initialize npm, install dependencies, folder structure,
+        app.js, server.js, database connection.
+
+  [ ] Phase 02 — User Model
+        Sequelize User model with fields, validations, and
+        bcrypt password hashing hook.
+
+  [ ] Phase 03 — Authentication
+        Register, Login, Logout endpoints with JWT + cookies.
+
+  [ ] Phase 04 — Auth Middleware
+        JWT verification middleware and role-based access control.
+
+  [ ] Phase 05 — Reimbursement Model
+        Sequelize model for reimbursement requests.
+
+  [ ] Phase 06 — Reimbursement CRUD
+        Create, Read, Update, Delete endpoints for requests.
+
+  [ ] Phase 07 — Admin Features
+        Admin approve/reject reimbursement requests.
+
+  [ ] Phase 08 — File Uploads (Receipts)
+        Upload receipt images using Multer.
+
+  [ ] Phase 09 — Reporting & Filters
+        Filter requests by status, date range, user, amount.
+
+  [ ] Phase 10 — Polish & Production
+        Error handling, logging, security headers, deployment.
+
+----------------------------------------------------------------
+CURRENT STATUS
+----------------------------------------------------------------
+  Active Phase : Phase 01 (Completed)
+  Next Up      : Phase 02 — User Model
+
+================================================================

@@ -1,0 +1,50 @@
+================================================================
+PHASE 04 — AUTH MIDDLEWARE
+================================================================
+
+Goal:
+  Protect private routes by verifying the JWT from cookies
+  and attaching the authenticated user to the request object.
+
+Tasks:
+  [x] Create src/middleware/authenticate.js
+        - Reads token from req.cookies.authToken (HTTP-only cookie)
+        - Verifies JWT signature and expiry with jwt.verify()
+        - Fetches user from DB by decoded.id to confirm still exists
+        - Attaches safe user object to req.user, calls next()
+  [x] Create src/middleware/authorize.js (role-based access)
+        - Factory: authorize('CFO', 'APE') returns a middleware
+        - Checks req.user.role against allowedRoles[]
+        - Throws 403 AppError with list of required roles if denied
+
+Error Cases Handled:
+  - No cookie / no token    → 401 "Authentication required."
+  - Token expired           → 401 "Your session has expired."
+  - Signature invalid       → 401 "Invalid token."
+  - User deleted from DB    → 401 "Account no longer exists."
+  - Role not permitted      → 403 "Access denied. Requires: CFO, APE."
+
+Usage Example:
+  const authenticate = require('../middleware/authenticate');
+  const authorize    = require('../middleware/authorize');
+
+  // Any logged-in user
+  router.get('/profile', authenticate, handler);
+
+  // CFO or APE only
+  router.get('/approvals', authenticate, authorize('CFO', 'APE'), handler);
+
+  // CFO only
+  router.delete('/users/:id', authenticate, authorize('CFO'), handler);
+
+Design Decisions:
+  - Token read from cookie (not Authorization header) — stays consistent
+    with how auth.controller sets and clears the token
+  - DB lookup on every request — prevents ghost tokens for deleted users
+  - Inner try/catch around jwt.verify() to distinguish JWT errors from
+    unexpected errors (DB failures etc.) which fall through to errorHandler
+  - authorize() is a factory so it accepts any number of roles variably
+  - Both middlewares imported and composed at the route level, not in app.js
+
+Status: Completed
+================================================================

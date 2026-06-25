@@ -1,0 +1,51 @@
+================================================================
+PROMPT LOGS — AI Assistance History
+================================================================
+Use this file to log important prompts sent to AI tools
+and their key outputs/decisions. Helps with reproducibility.
+
+----------------------------------------------------------------
+[2026-06-25] PROMPT #1 — Project Setup
+----------------------------------------------------------------
+  Prompt:
+    "Create a Node.js backend project using Express.js and
+     PostgreSQL. Use Sequelize ORM. Follow repo-service-controller
+     architecture. Configure dotenv, express, sequelize, pg,
+     cookie-parser, bcryptjs, jsonwebtoken. Create app.js and
+     database connection files."
+
+  Key Decisions Made:
+    - Used src/ as root for all application code
+    - server.js at root acts as entry point
+    - app.js only exports the Express app (no listen call)
+    - connectDB() exits process on failure (fail-fast)
+    - asyncHandler utility to avoid try/catch boilerplate
+    - AppError class for structured operational errors
+    - errorHandler exposes stack trace only in development
+
+  Files Created:
+    server.js, src/app.js, src/config/database.js,
+    src/config/env.js, src/middleware/errorHandler.js,
+    src/middleware/notFound.js, src/models/index.js,
+    src/routes/index.js, src/utils/AppError.js,
+    src/utils/asyncHandler.js
+
+----------------------------------------------------------------
+[2026-06-25] PROMPT #2 — Docs Folder Structure
+----------------------------------------------------------------
+  Prompt:
+    "Create docs/ folder with phases/, notes/ subfolders,
+     Project-Roadmap.txt and prompt-logs.txt"
+
+  Files Created:
+    docs/phases/Phase-01-Setup.txt
+    docs/phases/Phase-02-User-Model.txt
+    docs/phases/Phase-03-Authentication.txt
+    docs/phases/Phase-04-Auth-Middleware.txt
+    docs/notes/database-design.txt
+    docs/notes/api-flow.txt
+    docs/notes/edge-cases.txt
+    docs/Project-Roadmap.txt
+    docs/prompt-logs.txt  ← this file
+
+================================================================

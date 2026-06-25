@@ -1,0 +1,42 @@
+================================================================
+DATABASE DESIGN NOTES
+================================================================
+
+ORM:        Sequelize v6
+Database:   PostgreSQL
+Connection: Managed via src/config/database.js
+
+----------------------------------------------------------------
+TABLES (planned)
+----------------------------------------------------------------
+
+users
+  id          UUID / SERIAL   PK
+  name        VARCHAR(100)    NOT NULL
+  email       VARCHAR(150)    UNIQUE, NOT NULL
+  password    VARCHAR(255)    NOT NULL  (bcrypt hash)
+  role        ENUM            DEFAULT 'user'
+  created_at  TIMESTAMP       DEFAULT NOW()
+  updated_at  TIMESTAMP       DEFAULT NOW()
+
+----------------------------------------------------------------
+NAMING CONVENTIONS
+----------------------------------------------------------------
+  - Table names   : snake_case, plural   (e.g. reimbursement_requests)
+  - Column names  : snake_case           (e.g. created_at)
+  - Model names   : PascalCase           (e.g. ReimbursementRequest)
+  - FK pattern    : <table>_id           (e.g. user_id)
+
+----------------------------------------------------------------
+ASSOCIATIONS (to be defined in src/models/index.js)
+----------------------------------------------------------------
+  User hasMany ReimbursementRequest
+  ReimbursementRequest belongsTo User
+
+----------------------------------------------------------------
+SYNC STRATEGY
+----------------------------------------------------------------
+  Development : sequelize.sync({ alter: true })
+  Production  : Use Sequelize Migrations only — NEVER sync()
+
+================================================================

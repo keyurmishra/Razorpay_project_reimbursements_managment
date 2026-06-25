@@ -1,7 +1,5 @@
 'use strict';
 
-require('dotenv').config();
-
 const express = require('express');
 const cookieParser = require('cookie-parser');
 
@@ -16,7 +14,15 @@ app.use(express.json());                          // Parse JSON request bodies
 app.use(express.urlencoded({ extended: true }));  // Parse URL-encoded request bodies
 app.use(cookieParser(process.env.COOKIE_SECRET)); // Parse cookies (with optional signing)
 
+const swaggerUi = require('swagger-ui-express');
+const YAML = require('yamljs');
+const path = require('path');
+
+// Load swagger document
+const swaggerDocument = YAML.load(path.join(__dirname, '../docs/swagger.yaml'));
+
 // ── API Routes ─────────────────────────────────────────────────────────────────
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/api', routes);
 
 // ── 404 Handler ────────────────────────────────────────────────────────────────

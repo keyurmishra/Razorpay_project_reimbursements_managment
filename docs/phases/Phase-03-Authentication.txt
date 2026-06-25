@@ -1,0 +1,37 @@
+================================================================
+PHASE 03 — AUTHENTICATION
+================================================================
+
+Goal:
+  Implement Register and Login endpoints using JWT and cookies.
+
+Tasks:
+  [x] Create src/repositories/user.repository.js
+  [x] Create src/services/auth.service.js
+  [x] Create src/controllers/auth.controller.js
+  [x] Create src/routes/onboarding.routes.js
+  [x] Create src/validations/auth.validation.js
+  [x] POST /rest/onboardings/register → hash password, save user, set cookie
+  [x] POST /rest/onboardings/login    → verify credentials, sign JWT, set cookie
+  [x] POST /rest/onboardings/logout   → clear auth cookie
+  [x] Update src/routes/index.js to mount onboarding routes
+  [x] Update src/middleware/errorHandler.js for validation + Sequelize errors
+
+Design Decisions:
+  - Only @org.com emails allowed — validated before touching DB
+  - bcrypt salt rounds = 12 (good balance of security vs. performance)
+  - JWT stored in HTTP-only cookie named "authToken"
+  - secure: true cookie flag only in production (allows local dev over HTTP)
+  - Login error is generic "Invalid credentials." to prevent user enumeration
+  - Validation collects ALL field errors before throwing (not fail-fast per field)
+  - errorHandler now handles UniqueConstraintError (409) and ValidationError (400)
+  - Repository has two separate finders: findByEmail (no hash) vs
+    findByEmailWithPassword (with hash) to make accidental exposure impossible
+
+Endpoints:
+  POST /api/rest/onboardings/register
+  POST /api/rest/onboardings/login
+  POST /api/rest/onboardings/logout
+
+Status: Completed
+================================================================

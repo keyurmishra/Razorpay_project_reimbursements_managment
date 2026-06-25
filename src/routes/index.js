@@ -3,6 +3,11 @@
 const express = require('express');
 const router = express.Router();
 
+const onboardingRoutes       = require('./onboarding.routes');
+const rolesRoutes            = require('./roles.routes');
+const employeesRoutes        = require('./employees.routes');
+const reimbursementsRoutes   = require('./reimbursements.routes');
+
 /**
  * API Health Check
  * GET /api/health
@@ -16,9 +21,22 @@ router.get('/health', (req, res) => {
   });
 });
 
-// ── Mount feature routers here ────────────────────────────────────────────────
-// Example (uncomment when routes are created):
-// const authRoutes = require('./auth.routes');
-// router.use('/auth', authRoutes);
+// ── Feature Routers ───────────────────────────────────────────────────────────
+// POST /rest/onboardings/register
+// POST /rest/onboardings/login
+// POST /rest/onboardings/logout
+router.use('/rest/onboardings', onboardingRoutes);
+
+// POST /rest/roles/assign
+router.use('/rest/roles', rolesRoutes);
+
+// POST   /rest/employees/assign
+// DELETE /rest/employees/assign
+router.use('/rest/employees', employeesRoutes);
+
+// POST /rest/reimbursements
+router.use('/rest/reimbursements', reimbursementsRoutes);
 
 module.exports = router;
+
+

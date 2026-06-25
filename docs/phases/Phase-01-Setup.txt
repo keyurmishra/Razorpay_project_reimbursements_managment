@@ -1,0 +1,19 @@
+================================================================
+PHASE 01 — PROJECT SETUP
+================================================================
+
+Goal:
+  Initialize the Node.js project with Express.js, Sequelize,
+  and PostgreSQL. Configure folder structure and environment.
+
+Tasks:
+  [ ] Initialize npm project
+  [ ] Install dependencies (express, sequelize, pg, dotenv, etc.)
+  [ ] Create src/ folder structure
+  [ ] Configure .env file
+  [ ] Setup app.js and server.js
+  [ ] Configure database connection (Sequelize)
+  [ ] Test DB connection with connectDB()
+
+Status: Completed
+================================================================

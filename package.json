@@ -4,6 +4,7 @@
   "description": "Node.js REST API with Express, Sequelize, and PostgreSQL",
   "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "test:db:setup": "cross-env NODE_ENV=test npm run db:push",

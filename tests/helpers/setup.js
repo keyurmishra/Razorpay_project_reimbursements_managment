@@ -1,42 +1,38 @@
 'use strict';
 
-const db = require('../../src/models');
+const db = require('../../src/db');
+const { users, employeeManagers, reimbursements, approvals } = require('../../src/db/schema');
 const authService = require('../../src/services/auth.service');
-const { connectDB } = require('../../src/config/database');
 const bcrypt = require('bcryptjs');
 
 /**
  * Connect to database and clear all tables to ensure a clean state
  */
 const setupDatabase = async () => {
-  // Test DB connection
-  await db.sequelize.authenticate();
-  
-  // Truncate all tables. 
-  // CASCADE handles foreign key dependencies.
-  await db.sequelize.query('TRUNCATE TABLE reimbursements, approvals, employee_managers, users RESTART IDENTITY CASCADE;');
+  // Truncate all tables using Drizzle and raw SQL
+  const { sql } = require('drizzle-orm');
+  await db.execute(sql`TRUNCATE TABLE reimbursements, approvals, employee_managers, users RESTART IDENTITY CASCADE;`);
 };
 
 /**
- * Create a user directly in the DB (bypassing service rules for speed/convenience in tests)
+ * Create a user directly in the DB
  */
 const seedUser = async (name, email, password, role) => {
   const passwordHash = await bcrypt.hash(password, 10);
-  return db.User.create({
+  const [user] = await db.insert(users).values({
     name,
     email,
     passwordHash,
     role,
-  });
+  }).returning();
+  return user;
 };
 
 /**
  * Helper to get a JWT cookie string for supertest.
- * Returns an array that can be passed to supertest's `.set('Cookie', ...)`
  */
 const getAuthCookie = async (email, password) => {
   const { token } = await authService.login({ email, password });
-  // Simulate what res.cookie does. Supertest expects an array of cookies.
   return [`authToken=${token}; HttpOnly`];
 };
 

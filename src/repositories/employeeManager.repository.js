@@ -1,47 +1,29 @@
 'use strict';
 
-const db = require('../models');
+const db = require('../db');
+const { employeeManagers } = require('../db/schema');
+const { eq } = require('drizzle-orm');
 
-/**
- * EmployeeManagerRepository
- * All direct Sequelize queries for the EmployeeManager model live here.
- * Services must NOT import the model directly — always go through this layer.
- */
-
-/**
- * Find the current manager assignment for a given employee.
- *
- * @param {number} employeeId
- * @returns {Promise<import('../models/employeeManager.model').EmployeeManager|null>}
- */
 const findByEmployeeId = async (employeeId) => {
-  return db.EmployeeManager.findOne({ where: { employeeId } });
+  const assignment = await db.query.employeeManagers.findFirst({
+    where: eq(employeeManagers.employeeId, employeeId),
+  });
+  return assignment || null;
 };
 
-/**
- * Create a new employee-manager assignment.
- *
- * @param {number} employeeId
- * @param {number} managerId
- * @returns {Promise<import('../models/employeeManager.model').EmployeeManager>}
- */
 const createAssignment = async (employeeId, managerId) => {
-  return db.EmployeeManager.create({ employeeId, managerId });
+  const [assignment] = await db
+    .insert(employeeManagers)
+    .values({
+      employeeId,
+      managerId,
+    })
+    .returning();
+  return assignment;
 };
 
-/**
- * Delete the manager assignment for a given employee.
- * Returns the number of rows deleted (1 on success, 0 if no row existed).
- *
- * @param {number} employeeId
- * @returns {Promise<number>}
- */
 const deleteAssignment = async (employeeId) => {
-  return db.EmployeeManager.destroy({ where: { employeeId } });
+  await db.delete(employeeManagers).where(eq(employeeManagers.employeeId, employeeId));
 };
 
-module.exports = {
-  findByEmployeeId,
-  createAssignment,
-  deleteAssignment,
-};
+module.exports = { findByEmployeeId, createAssignment, deleteAssignment };

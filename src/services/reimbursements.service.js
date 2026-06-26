@@ -2,8 +2,18 @@
 
 const reimbursementRepository = require('../repositories/reimbursement.repository');
 const approvalRepository      = require('../repositories/approval.repository');
-const { REIMBURSEMENT_STATUS } = require('../models/reimbursement.model');
-const { APPROVAL_DECISION }    = require('../models/approval.model');
+const REIMBURSEMENT_STATUS = {
+  PENDING: 'PENDING',
+  RM_APPROVED: 'RM_APPROVED',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  PAID: 'PAID',
+};
+
+const APPROVAL_DECISION = {
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+};
 const AppError = require('../utils/AppError');
 
 // ── State machine ─────────────────────────────────────────────────────────────

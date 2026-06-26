@@ -1,128 +1,107 @@
 'use strict';
 
-const db = require('../models');
+const db = require('../db');
+const { users, employeeManagers } = require('../db/schema');
+const { eq, inArray, and } = require('drizzle-orm');
 
-/**
- * UserRepository
- * All direct Sequelize queries for the User model live here.
- * Services must NOT import the model directly — always go through this layer.
- *
- * NOTE: db.User is accessed inside each function (not destructured at the top)
- * to avoid capturing undefined during the module-load circular-reference window.
- */
+// Helper to exclude passwordHash
+const excludePassword = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  createdAt: true,
+  updatedAt: true,
+};
 
-/**
- * Find a user by email.
- * Uses the defaultScope, so passwordHash is excluded.
- *
- * @param {string} email
- * @returns {Promise<import('../models/user.model').User|null>}
- */
 const findByEmail = async (email) => {
-  return db.User.findOne({ where: { email: email.toLowerCase().trim() } });
+  const user = await db.query.users.findFirst({
+    where: eq(users.email, email.toLowerCase().trim()),
+    columns: excludePassword,
+  });
+  return user || null;
 };
 
-/**
- * Find a user by email AND include the passwordHash field.
- * ONLY use this in the auth service during login verification.
- *
- * @param {string} email
- * @returns {Promise<import('../models/user.model').User|null>}
- */
 const findByEmailWithPassword = async (email) => {
-  return db.User.scope('withPassword').findOne({
-    where: { email: email.toLowerCase().trim() },
+  const user = await db.query.users.findFirst({
+    where: eq(users.email, email.toLowerCase().trim()),
   });
+  return user || null;
 };
 
-/**
- * Find a user by primary key (id).
- * Uses the defaultScope, so passwordHash is excluded.
- *
- * @param {number} id
- * @returns {Promise<import('../models/user.model').User|null>}
- */
 const findById = async (id) => {
-  return db.User.findByPk(id);
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, id),
+    columns: excludePassword,
+  });
+  return user || null;
 };
 
-/**
- * Create a new user record.
- *
- * @param {{ name: string, email: string, passwordHash: string, role?: string }} data
- * @returns {Promise<import('../models/user.model').User>}
- */
 const createUser = async ({ name, email, passwordHash, role }) => {
-  return db.User.create({
-    name: name.trim(),
-    email: email.toLowerCase().trim(),
-    passwordHash,
-    role,
-  });
+  const [user] = await db
+    .insert(users)
+    .values({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      passwordHash,
+      role: role || 'EMP',
+    })
+    .returning(excludePassword);
+  return user;
 };
 
-/**
- * Update the role of an existing user by their primary key.
- *
- * Returns the number of rows affected ([1] on success, [0] if id not found).
- *
- * @param {number} id   - User's primary key
- * @param {string} role - New role value (must match the ENUM defined in user.model.js)
- * @returns {Promise<[number]>}
- */
 const updateRole = async (id, role) => {
-  return db.User.update({ role }, { where: { id } });
+  const [updated] = await db
+    .update(users)
+    .set({ role, updatedAt: new Date().toISOString() })
+    .where(eq(users.id, id))
+    .returning({ id: users.id });
+  
+  return updated ? [1] : [0];
 };
 
-/**
- * Find all users who are direct reports of a given manager (RM view).
- *
- * Uses a required include through EmployeeManager to restrict the result
- * to employees assigned to this RM — equivalent to:
- *   SELECT users.* FROM users
- *   INNER JOIN employee_managers em ON em.employee_id = users.id
- *   WHERE em.manager_id = managerId
- *
- * @param {number} managerId - The RM's user id
- * @returns {Promise<import('../models/user.model').User[]>}
- */
 const findDirectReports = async (managerId) => {
-  return db.User.findAll({
-    include: [
-      {
-        model: db.EmployeeManager,
-        as: 'assignment',
-        where: { managerId },   // filter: only this RM's direct reports
-        attributes: ['managerId', 'createdAt'],  // expose assignment metadata
-        required: true,         // INNER JOIN — exclude unassigned employees
+  // We need users who have a manager matching managerId
+  // In Drizzle, we can query users and include their managerAssignment if it matches managerId
+  // Wait, relational query might return users even if the with-condition fails (it just returns null for the relation).
+  // So it's better to query employeeManagers and include the employee, then map the result.
+  const assignments = await db.query.employeeManagers.findMany({
+    where: eq(employeeManagers.managerId, managerId),
+    with: {
+      employee: {
+        columns: excludePassword,
       },
-    ],
-    order: [['name', 'ASC']],
+    },
+    orderBy: (assignments, { asc }) => [asc(assignments.createdAt)],
   });
+
+  // Map to match the Sequelize output format which returned users with assignment attached
+  return assignments
+    .map((a) => {
+      const user = a.employee;
+      if (!user) return null; // should not happen with FK constraint
+      user.assignment = {
+        managerId: a.managerId,
+        createdAt: a.createdAt,
+      };
+      return user;
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.name.localeCompare(b.name));
 };
 
-/**
- * Find all users whose role is in the given list (APE view).
- *
- * @param {string[]} roles - Array of role strings, e.g. ['EMP', 'RM']
- * @returns {Promise<import('../models/user.model').User[]>}
- */
 const findByRoles = async (roles) => {
-  return db.User.findAll({
-    where: { role: roles },   // Sequelize translates array → WHERE role IN (...)
-    order: [['name', 'ASC']],
+  return db.query.users.findMany({
+    where: inArray(users.role, roles),
+    columns: excludePassword,
+    orderBy: (users, { asc }) => [asc(users.name)],
   });
 };
 
-/**
- * Find all users in the system (CFO view).
- * passwordHash is excluded via the model's defaultScope.
- *
- * @returns {Promise<import('../models/user.model').User[]>}
- */
 const findAllUsers = async () => {
-  return db.User.findAll({
-    order: [['role', 'ASC'], ['name', 'ASC']],
+  return db.query.users.findMany({
+    columns: excludePassword,
+    orderBy: (users, { asc }) => [asc(users.role), asc(users.name)],
   });
 };
 
